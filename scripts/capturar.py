@@ -11,6 +11,7 @@ Rode na máquina do instrutor, com o proxy no ar:
 import json
 import os
 import shutil
+import tempfile
 import time
 from pathlib import Path
 
@@ -117,26 +118,40 @@ def capturar(cnjs: list[str], client: httpx.Client, destino: Path) -> None:
     print(f"Captura finalizada em {duracao:.1f}s: {gravados} gravados, {pulados_nao_encontrado} nao_encontrado, {pulados_grupo_sem_processos} grupo_sem_processos")
 
 
-def substituir_dados(origem: Path, destino: Path) -> None:
-    """Move captured files from origem to destino, replacing existing files.
+def executar(cnjs: list[str], client: httpx.Client, destino: Path) -> None:
+    """Captura dados em diretório temporário e substitui destino atomicamente.
+
+    Cria diretório de captura no mesmo filesystem que destino para evitar
+    erros de rename entre filesystems. Se capturar falhar, deixa destino intacto.
+    Se a substituição falhar, remove apenas o diretório de captura.
 
     Args:
-        origem: Temporary directory with captured files.
-        destino: Final destination for mock data.
+        cnjs: CNJs a capturar.
+        client: Cliente apontado para a consulta-api real.
+        destino: Raiz final dos dados do mock.
     """
-    for arquivo in destino.glob("*/*.json"):
-        arquivo.unlink()
-    for arquivo in origem.glob("*/*.json"):
-        arquivo_destino = destino / arquivo.relative_to(origem)
-        arquivo_destino.parent.mkdir(parents=True, exist_ok=True)
-        arquivo.rename(arquivo_destino)
+    captura_dir = Path(tempfile.mkdtemp(dir=destino.parent, prefix=".captura-"))
+
+    try:
+        capturar(cnjs, client, captura_dir)
+
+        backup_dir = destino.parent / f".backup-{destino.name}"
+        try:
+            if destino.exists():
+                destino.rename(backup_dir)
+            captura_dir.rename(destino)
+            if backup_dir.exists():
+                shutil.rmtree(backup_dir)
+        except Exception:
+            if backup_dir.exists():
+                backup_dir.rename(destino)
+            raise
+    except Exception:
+        if captura_dir.exists():
+            shutil.rmtree(captura_dir)
+        raise
 
 
 if __name__ == "__main__":
-    import tempfile
-
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_path = Path(temp_dir)
-        with httpx.Client(base_url=os.environ.get("BASE_URL", "http://localhost:8074"), timeout=30) as client:
-            capturar(CNJS, client, temp_path)
-        substituir_dados(temp_path, DESTINO_PADRAO)
+    with httpx.Client(base_url=os.environ.get("BASE_URL", "http://localhost:8074"), timeout=30) as client:
+        executar(CNJS, client, DESTINO_PADRAO)

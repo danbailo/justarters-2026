@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 
 from cnjs import CNJS
 from mock.app import DATA_DIR_PADRAO, app
-from scripts.capturar import capturar, filtrar_grupo, filtrar_processo, substituir_dados
+from scripts.capturar import capturar, executar, filtrar_grupo, filtrar_processo
 from sessao_1.solucao import de_para
 
 GRUPO_REAL: dict = {
@@ -83,33 +83,13 @@ def test_mock_data_atual_roda_o_de_para(monkeypatch: pytest.MonkeyPatch) -> None
     assert any(resultado.sucesso for resultado in resultados)
 
 
-def test_substituir_dados_move_arquivos(tmp_path: Path) -> None:
-    """Verifica que substituir_dados move arquivos e limpa destino antigo."""
-    origem = tmp_path / "origem"
-    destino = tmp_path / "destino"
+def test_executar_falha_nao_toca_destino(tmp_path: Path) -> None:
+    """Verifica que falha na requisição deixa destino intacto e limpa temp."""
+    destino = tmp_path / "data"
     destino.mkdir()
-
-    (origem / "grupo_processual").mkdir(parents=True)
-    (origem / "grupo_processual" / "test.json").write_text('{"id": 1}')
-    (destino / "processo").mkdir(parents=True)
-    (destino / "processo" / "old.json").write_text('{"id": 999}')
-
-    substituir_dados(origem, destino)
-
-    assert (destino / "grupo_processual" / "test.json").exists()
-    assert not (destino / "processo" / "old.json").exists()
-    assert not (origem / "grupo_processual" / "test.json").exists()
-
-
-def test_capturar_falha_nao_toca_destino(tmp_path: Path) -> None:
-    """Verifica que falha na requisição não toca arquivos no destino."""
-    origem = tmp_path / "origem"
-    destino = tmp_path / "destino"
-    origem.mkdir()
-    destino.mkdir()
-
-    (destino / "processo").mkdir()
-    (destino / "processo" / "old.json").write_text('{"id": 999}')
+    sentinel = destino / "processo" / "old.json"
+    sentinel.parent.mkdir()
+    sentinel.write_text('{"id": 999}')
 
     def responder(request: httpx.Request) -> httpx.Response:
         if request.url.path.startswith("/v2/grupo_processual/0000000"):
@@ -120,9 +100,38 @@ def test_capturar_falha_nao_toca_destino(tmp_path: Path) -> None:
 
     client = httpx.Client(transport=httpx.MockTransport(responder), base_url="http://x")
     with pytest.raises(httpx.HTTPStatusError):
-        capturar(["0000000-00.2026.8.26.0100"], client, origem)
+        executar(["0000000-00.2026.8.26.0100"], client, destino)
 
-    assert (destino / "processo" / "old.json").exists()
+    assert sentinel.exists()
+    assert sentinel.read_text() == '{"id": 999}'
+    temp_dirs = list(tmp_path.glob(".captura-*"))
+    assert len(temp_dirs) == 0
+
+
+def test_executar_sucesso_substitui_conteudo(tmp_path: Path) -> None:
+    """Verifica que executar substitui conteúdo de destino e limpa backup."""
+    destino = tmp_path / "data"
+    destino.mkdir()
+    (destino / "processo").mkdir()
+    (destino / "processo" / "old.json").write_text('{"id": 999}')
+
+    def responder(request: httpx.Request) -> httpx.Response:
+        if request.url.path.startswith("/v2/grupo_processual/0000000"):
+            return httpx.Response(200, json=GRUPO_REAL)
+        if request.url.path == "/processo/42":
+            return httpx.Response(200, json=PROCESSO_REAL)
+        return httpx.Response(404)
+
+    client = httpx.Client(transport=httpx.MockTransport(responder), base_url="http://x")
+    executar(["0000000-00.2026.8.26.0100"], client, destino)
+
+    assert (destino / "grupo_processual" / "0000000-00.2026.8.26.0100.json").exists()
+    assert (destino / "processo" / "42.json").exists()
+    assert not (destino / "processo" / "old.json").exists()
+    temp_dirs = list(tmp_path.glob(".captura-*"))
+    backup_dirs = list(tmp_path.glob(".backup-*"))
+    assert len(temp_dirs) == 0
+    assert len(backup_dirs) == 0
 
 
 def test_capturar_resume_com_contadores(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:

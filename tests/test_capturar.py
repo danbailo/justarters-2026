@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 
 from cnjs import CNJS
 from mock.app import DATA_DIR_PADRAO, app
-from scripts.capturar import capturar, filtrar_grupo, filtrar_processo
+from scripts.capturar import capturar, filtrar_grupo, filtrar_processo, substituir_dados
 from sessao_1.solucao import de_para
 
 GRUPO_REAL: dict = {
@@ -81,3 +81,75 @@ def test_mock_data_atual_roda_o_de_para(monkeypatch: pytest.MonkeyPatch) -> None
     monkeypatch.setenv("MOCK_DATA_DIR", str(DATA_DIR_PADRAO))
     resultados = [de_para(cnj, TestClient(app)) for cnj in CNJS]
     assert any(resultado.sucesso for resultado in resultados)
+
+
+def test_substituir_dados_move_arquivos(tmp_path: Path) -> None:
+    """Verifica que substituir_dados move arquivos e limpa destino antigo."""
+    origem = tmp_path / "origem"
+    destino = tmp_path / "destino"
+    destino.mkdir()
+
+    (origem / "grupo_processual").mkdir(parents=True)
+    (origem / "grupo_processual" / "test.json").write_text('{"id": 1}')
+    (destino / "processo").mkdir(parents=True)
+    (destino / "processo" / "old.json").write_text('{"id": 999}')
+
+    substituir_dados(origem, destino)
+
+    assert (destino / "grupo_processual" / "test.json").exists()
+    assert not (destino / "processo" / "old.json").exists()
+    assert not (origem / "grupo_processual" / "test.json").exists()
+
+
+def test_capturar_falha_nao_toca_destino(tmp_path: Path) -> None:
+    """Verifica que falha na requisição não toca arquivos no destino."""
+    origem = tmp_path / "origem"
+    destino = tmp_path / "destino"
+    origem.mkdir()
+    destino.mkdir()
+
+    (destino / "processo").mkdir()
+    (destino / "processo" / "old.json").write_text('{"id": 999}')
+
+    def responder(request: httpx.Request) -> httpx.Response:
+        if request.url.path.startswith("/v2/grupo_processual/0000000"):
+            return httpx.Response(200, json=GRUPO_REAL)
+        if request.url.path == "/processo/42":
+            return httpx.Response(500)
+        return httpx.Response(404)
+
+    client = httpx.Client(transport=httpx.MockTransport(responder), base_url="http://x")
+    with pytest.raises(httpx.HTTPStatusError):
+        capturar(["0000000-00.2026.8.26.0100"], client, origem)
+
+    assert (destino / "processo" / "old.json").exists()
+
+
+def test_capturar_resume_com_contadores(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    """Verifica que capturar resume skips por razão e tempo decorrido."""
+    def responder(request: httpx.Request) -> httpx.Response:
+        if request.url.path.startswith("/v2/grupo_processual/1111111"):
+            return httpx.Response(404)
+        if request.url.path.startswith("/v2/grupo_processual/2222222"):
+            grupo_sem_processo = {
+                "processos_categorizados": {
+                    "conhecimento_principal": None,
+                    "conhecimento_recurso": [],
+                    "execucao_principal": None,
+                }
+            }
+            return httpx.Response(200, json=grupo_sem_processo)
+        if request.url.path.startswith("/v2/grupo_processual/0000000"):
+            return httpx.Response(200, json=GRUPO_REAL)
+        if request.url.path == "/processo/42":
+            return httpx.Response(200, json=PROCESSO_REAL)
+        return httpx.Response(404)
+
+    client = httpx.Client(transport=httpx.MockTransport(responder), base_url="http://x")
+    capturar(["1111111-11.2026.8.26.0100", "2222222-22.2026.8.26.0100", "0000000-00.2026.8.26.0100"], client, tmp_path)
+
+    captured = capsys.readouterr()
+    assert "1 gravados" in captured.out
+    assert "1 nao_encontrado" in captured.out
+    assert "1 grupo_sem_processos" in captured.out
+    assert "s:" in captured.out

@@ -10,6 +10,8 @@ Rode na máquina do instrutor, com o proxy no ar:
 
 import json
 import os
+import shutil
+import time
 from pathlib import Path
 
 import httpx
@@ -82,35 +84,59 @@ def capturar(cnjs: list[str], client: httpx.Client, destino: Path) -> None:
         client: Cliente apontado para a consulta-api real.
         destino: Raiz dos dados do mock.
     """
+    inicio = time.time()
     print(f"Captura iniciada: {len(cnjs)} CNJs -> {destino}")
     gravados = 0
-    for cnj in cnjs:
-        resposta = client.get(f"/v2/grupo_processual/{cnj}")
-        if resposta.status_code == 404:
-            print(f"Pulado {cnj}: não encontrado na consulta-api")
-            continue
-        resposta.raise_for_status()
-        grupo = filtrar_grupo(resposta.json())
-        _gravar(destino / "grupo_processual" / f"{cnj}.json", grupo)
+    pulados_nao_encontrado = 0
+    pulados_grupo_sem_processos = 0
 
-        processo_id = escolher_processo_id(grupo)
-        if processo_id is None:
-            print(f"Pulado processo de {cnj}: grupo sem processos")
-            continue
-        resposta = client.get(f"/processo/{processo_id}")
-        resposta.raise_for_status()
-        _gravar(destino / "processo" / f"{processo_id}.json", filtrar_processo(resposta.json()))
-        gravados += 1
-    print(f"Captura finalizada: {gravados}/{len(cnjs)} CNJs com processo gravado")
+    try:
+        for cnj in cnjs:
+            resposta = client.get(f"/v2/grupo_processual/{cnj}")
+            if resposta.status_code == 404:
+                pulados_nao_encontrado += 1
+                continue
+            resposta.raise_for_status()
+            grupo = filtrar_grupo(resposta.json())
+            _gravar(destino / "grupo_processual" / f"{cnj}.json", grupo)
+
+            processo_id = escolher_processo_id(grupo)
+            if processo_id is None:
+                pulados_grupo_sem_processos += 1
+                continue
+            resposta = client.get(f"/processo/{processo_id}")
+            resposta.raise_for_status()
+            _gravar(destino / "processo" / f"{processo_id}.json", filtrar_processo(resposta.json()))
+            gravados += 1
+    except Exception as e:
+        duracao = time.time() - inicio
+        print(f"Captura falhou após {duracao:.1f}s: {gravados} gravados, {pulados_nao_encontrado} nao_encontrado, {pulados_grupo_sem_processos} grupo_sem_processos. Erro: {type(e).__name__}: {e}")
+        raise
+
+    duracao = time.time() - inicio
+    print(f"Captura finalizada em {duracao:.1f}s: {gravados} gravados, {pulados_nao_encontrado} nao_encontrado, {pulados_grupo_sem_processos} grupo_sem_processos")
 
 
-def _limpar(destino: Path) -> None:
-    """Remove os JSONs atuais do mock (os sintéticos se regeneram com scripts.gerar_sinteticos)."""
+def substituir_dados(origem: Path, destino: Path) -> None:
+    """Move captured files from origem to destino, replacing existing files.
+
+    Args:
+        origem: Temporary directory with captured files.
+        destino: Final destination for mock data.
+    """
     for arquivo in destino.glob("*/*.json"):
         arquivo.unlink()
+    for arquivo in origem.glob("*/*.json"):
+        arquivo_destino = destino / arquivo.relative_to(origem)
+        arquivo_destino.parent.mkdir(parents=True, exist_ok=True)
+        arquivo.rename(arquivo_destino)
 
 
 if __name__ == "__main__":
-    _limpar(DESTINO_PADRAO)
-    with httpx.Client(base_url=os.environ.get("BASE_URL", "http://localhost:8074"), timeout=30) as client:
-        capturar(CNJS, client, DESTINO_PADRAO)
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir)
+        with httpx.Client(base_url=os.environ.get("BASE_URL", "http://localhost:8074"), timeout=30) as client:
+            capturar(CNJS, client, temp_path)
+        substituir_dados(temp_path, DESTINO_PADRAO)

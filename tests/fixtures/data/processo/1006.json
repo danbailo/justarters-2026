@@ -1,0 +1,16 @@
+{
+  "id": 1006,
+  "cnj": "0004083-39.2025.8.12.0110",
+  "estado": {
+    "sigla": "MS"
+  },
+  "tribunal": {
+    "nome_normalizado": "Tribunal de Justiça do Mato Grosso do Sul"
+  },
+  "comarca": {
+    "nome_normalizado": "Campo Grande"
+  },
+  "foro": {
+    "nome_normalizado": "Juizado Especial Cível"
+  }
+}

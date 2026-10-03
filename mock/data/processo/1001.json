@@ -1,0 +1,16 @@
+{
+  "id": 1001,
+  "cnj": "0000121-97.1999.8.16.0048",
+  "estado": {
+    "sigla": "PR"
+  },
+  "tribunal": {
+    "nome_normalizado": "Tribunal de Justiça do Paraná"
+  },
+  "comarca": {
+    "nome_normalizado": "Curitiba"
+  },
+  "foro": {
+    "nome_normalizado": "Foro Central"
+  }
+}

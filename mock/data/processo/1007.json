@@ -1,0 +1,16 @@
+{
+  "id": 1007,
+  "cnj": "1050631-71.2025.8.11.0001",
+  "estado": {
+    "sigla": "MT"
+  },
+  "tribunal": {
+    "nome_normalizado": "Tribunal de Justiça do Mato Grosso"
+  },
+  "comarca": {
+    "nome_normalizado": "Cuiabá"
+  },
+  "foro": {
+    "nome_normalizado": "Vara Cível"
+  }
+}

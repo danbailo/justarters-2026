@@ -1,0 +1,16 @@
+{
+  "id": 1005,
+  "cnj": "0007627-21.2025.5.05.0000",
+  "estado": {
+    "sigla": "BA"
+  },
+  "tribunal": {
+    "nome_normalizado": "Tribunal Regional do Trabalho da 5ª Região"
+  },
+  "comarca": {
+    "nome_normalizado": "Salvador"
+  },
+  "foro": {
+    "nome_normalizado": "Tribunal Pleno"
+  }
+}

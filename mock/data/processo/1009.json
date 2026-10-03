@@ -1,0 +1,16 @@
+{
+  "id": 1009,
+  "cnj": "5046683-30.2025.8.13.0702",
+  "estado": {
+    "sigla": "MG"
+  },
+  "tribunal": {
+    "nome_normalizado": "Tribunal de Justiça de Minas Gerais"
+  },
+  "comarca": {
+    "nome_normalizado": "Uberlândia"
+  },
+  "foro": {
+    "nome_normalizado": "Juizado Especial Cível"
+  }
+}

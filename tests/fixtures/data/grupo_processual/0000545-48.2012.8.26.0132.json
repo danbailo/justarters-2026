@@ -1,0 +1,15 @@
+{
+  "processos_categorizados": {
+    "conhecimento_principal": null,
+    "conhecimento_recurso": [
+      {
+        "id": 1003,
+        "cnj": "0000545-48.2012.8.26.0132"
+      }
+    ],
+    "conhecimento_apenso": [],
+    "execucao": [],
+    "execucao_principal": null,
+    "indefinida": []
+  }
+}

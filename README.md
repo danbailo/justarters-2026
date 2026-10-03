@@ -76,4 +76,4 @@ uv run pytest sessao_2/extras
 uv run pytest
 ```
 
-Os dados em `mock/data` são sintéticos até a captura (`scripts/capturar.py`).
+Os dados em `mock/data` foram capturados da consulta-api com whitelist de campos (`scripts/capturar.py`); para voltar aos sintéticos: `uv run python -m scripts.gerar_sinteticos mock/data`.

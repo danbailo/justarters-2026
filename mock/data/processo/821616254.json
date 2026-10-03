@@ -1,0 +1,15 @@
+{
+  "id": 821616254,
+  "estado": {
+    "sigla": "MG"
+  },
+  "tribunal": {
+    "nome_normalizado": "TRIBUNAL DE JUSTICA MINAS GERAIS"
+  },
+  "comarca": {
+    "nome_normalizado": "BAMBUI"
+  },
+  "foro": {
+    "nome_normalizado": "VARA UNICA"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": 832080488,
+  "estado": {
+    "sigla": "SP"
+  },
+  "tribunal": {
+    "nome_normalizado": "TRIBUNAL REGIONAL DO TRABALHO DA 2A REGIAO"
+  },
+  "comarca": {
+    "nome_normalizado": "SAO PAULO"
+  },
+  "foro": {
+    "nome_normalizado": "VARA DO TRABALHO"
+  }
+}

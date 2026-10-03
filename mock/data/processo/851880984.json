@@ -1,0 +1,15 @@
+{
+  "id": 851880984,
+  "estado": {
+    "sigla": "MG"
+  },
+  "tribunal": {
+    "nome_normalizado": "TRIBUNAL DE JUSTICA MINAS GERAIS"
+  },
+  "comarca": {
+    "nome_normalizado": "UBERLANDIA"
+  },
+  "foro": {
+    "nome_normalizado": "VARA CIVEL"
+  }
+}

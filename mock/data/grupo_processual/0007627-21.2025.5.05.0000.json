@@ -1,13 +1,28 @@
 {
   "processos_categorizados": {
-    "conhecimento_principal": {
-      "id": 1005,
-      "cnj": "0007627-21.2025.5.05.0000"
-    },
-    "conhecimento_recurso": [],
     "conhecimento_apenso": [],
+    "conhecimento_principal": {
+      "id": 832857619
+    },
+    "conhecimento_principal_antigo": [
+      {
+        "id": 884779553
+      },
+      {
+        "id": 833248331
+      }
+    ],
+    "conhecimento_recurso": [],
     "execucao": [],
+    "execucao_apenso": [],
+    "execucao_aut_principal": null,
+    "execucao_aut_principal_antigo": [],
     "execucao_principal": null,
-    "indefinida": []
+    "execucao_principal_antigo": [],
+    "execucao_aut_apenso": [],
+    "execucao_aut_recurso": [],
+    "execucao_recurso": [],
+    "indefinida": [],
+    "procedimento": []
   }
 }

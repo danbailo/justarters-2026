@@ -4,7 +4,7 @@ Só grava o necessário para o de-para: ids de processos e a localização.
 Partes, documentos e qualquer outro campo são descartados antes de gravar.
 
 Rode na máquina do instrutor, com o proxy no ar:
-    legal-port-forward-consulta-api        # outro terminal, expõe localhost:8074
+    port-forward-consulta-api              # outro terminal, expõe localhost:8074
     uv run python -m scripts.capturar
 """
 

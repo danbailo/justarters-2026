@@ -1,0 +1,15 @@
+{
+  "id": 364287021,
+  "estado": {
+    "sigla": "SP"
+  },
+  "tribunal": {
+    "nome_normalizado": "TRIBUNAL DE JUSTICA SAO PAULO"
+  },
+  "comarca": {
+    "nome_normalizado": "DUARTINA"
+  },
+  "foro": {
+    "nome_normalizado": "FORO DE DUARTINA"
+  }
+}

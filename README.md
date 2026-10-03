@@ -34,16 +34,22 @@ uv run python -m sessao_1.extras.retry           # retry com backoff contra um m
 uv run pytest sessao_1/extras                    # exemplo de testes
 ```
 
+Cada servidor usa a porta 8000: pare o anterior (Ctrl+C) antes de iniciar outro e, depois do retry, reinicie o mock sem `MOCK_FAIL_RATE`.
+
 Variáveis do mock: `MOCK_LATENCY_MS` (padrão 500), `MOCK_FAIL_RATE` (padrão 0).
 Com acesso à `consulta-api` real via proxy, rode o exercício com `BASE_URL=http://localhost:8074`.
 
 ### Bônus - cadastrar no "sistema do cliente"
+
+Demo do instrutor: envia respostas a um formulário real, não rode sem combinar.
 
 ```bash
 uv sync --group bonus && uv run playwright install chromium
 uv run python -m sessao_1.bonus.cadastrar_requests
 uv run python -m sessao_1.bonus.cadastrar_playwright
 ```
+
+No Codespaces (sem janela): `uv run playwright install --with-deps chromium` e `HEADLESS=1` ao rodar o Playwright.
 
 ## Sessão 2 - Comunicação via APIs
 

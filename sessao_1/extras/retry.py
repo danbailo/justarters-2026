@@ -6,10 +6,12 @@ Rode com um mock instável:
 """
 
 import os
+import pathlib
 import time
 
 import httpx
 
+from mock.app import DATA_DIR_PADRAO, primeiro_id_existente
 from sessao_1.solucao import BASE_URL_PADRAO
 
 
@@ -46,6 +48,8 @@ def get_com_retry(
 
 
 if __name__ == "__main__":
+    data_dir = pathlib.Path(os.environ.get("MOCK_DATA_DIR", DATA_DIR_PADRAO))
+    caminho = f"/processo/{primeiro_id_existente(data_dir)}"
     with httpx.Client(base_url=os.environ.get("BASE_URL", BASE_URL_PADRAO), timeout=10) as client:
         for _ in range(5):
-            print(get_com_retry(client, "/processo/1001").status_code)
+            print(get_com_retry(client, caminho).status_code)

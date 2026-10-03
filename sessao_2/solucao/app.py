@@ -22,10 +22,14 @@ app = FastAPI(title="API de processos - Justarters")
 
 
 class Estado(BaseModel):
+    """Estado do processo, só com a sigla."""
+
     sigla: str | None
 
 
 class Nome(BaseModel):
+    """Entidade identificada só pelo nome normalizado (tribunal, comarca, foro)."""
+
     nome_normalizado: str | None
 
 

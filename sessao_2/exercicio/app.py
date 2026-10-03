@@ -9,7 +9,7 @@ import json
 import os
 import pathlib
 
-from fastapi import FastAPI, HTTPException, Security
+from fastapi import Depends, FastAPI, HTTPException, Security
 from fastapi.security import APIKeyHeader
 
 from mock.app import DATA_DIR_PADRAO

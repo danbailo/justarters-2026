@@ -43,6 +43,18 @@ def _ler_json(caminho: pathlib.Path) -> dict:
     return json.loads(caminho.read_text(encoding="utf-8"))
 
 
+def primeiro_id_existente(data_dir: pathlib.Path) -> int:
+    """Menor id de processo disponível nos dados (sintéticos ou capturados).
+
+    Args:
+        data_dir: Raiz dos dados do mock.
+
+    Returns:
+        O menor id encontrado em data_dir/processo.
+    """
+    return min(int(arquivo.stem) for arquivo in (data_dir / "processo").glob("*.json"))
+
+
 async def _simular_upstream() -> None:
     """Aplica a latência (MOCK_LATENCY_MS) e a falha aleatória (MOCK_FAIL_RATE).
 

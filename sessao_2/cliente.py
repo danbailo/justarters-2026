@@ -13,7 +13,7 @@ from pathlib import Path
 
 import httpx
 
-from mock.app import DATA_DIR_PADRAO
+from mock.app import DATA_DIR_PADRAO, primeiro_id_existente
 
 
 @dataclass
@@ -32,18 +32,6 @@ class Checagem:
             True se status obtido confere com esperado, False caso contrário.
         """
         return self.esperado == self.obtido
-
-
-def primeiro_id_existente(data_dir: Path) -> int:
-    """Menor id de processo disponível nos dados (sintéticos ou capturados).
-
-    Args:
-        data_dir: Raiz dos dados do mock.
-
-    Returns:
-        O menor id encontrado em data_dir/processo.
-    """
-    return min(int(arquivo.stem) for arquivo in (data_dir / "processo").glob("*.json"))
 
 
 def checar(client: httpx.Client, api_key: str, processo_id: int) -> list[Checagem]:

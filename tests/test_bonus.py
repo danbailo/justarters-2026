@@ -1,6 +1,8 @@
 """Testes do bônus de cadastro no Google Form."""
 
 from unittest.mock import MagicMock
+import pytest
+import requests
 
 from sessao_1.bonus.cadastrar_requests import enviar_via_requests
 from sessao_1.bonus.comum import CAMPOS, FORM_URL, executar_cadastro, montar_payload
@@ -52,3 +54,28 @@ def test_enviar_via_requests_falha_quando_status_nao_e_200() -> None:
     session = MagicMock()
     session.post.return_value.status_code = 400
     assert enviar_via_requests(OK, session) is False
+
+
+def test_enviar_via_requests_retorna_false_quando_conexao_falha() -> None:
+    session: MagicMock = MagicMock()
+    session.post.side_effect = requests.ConnectionError("Network error")
+    assert enviar_via_requests(OK, session) is False
+
+
+def test_preencher_e_enviar_retorna_false_com_erro_playwright() -> None:
+    pytest.importorskip("playwright")
+    from sessao_1.bonus.cadastrar_playwright import preencher_e_enviar
+    from playwright.sync_api import Error as PlaywrightError
+
+    page: MagicMock = MagicMock()
+    page.goto.side_effect = PlaywrightError("Navigation failed")
+    assert preencher_e_enviar(page, OK) is False
+
+
+def test_preencher_e_enviar_retorna_true_no_caminho_feliz() -> None:
+    pytest.importorskip("playwright")
+    from sessao_1.bonus.cadastrar_playwright import preencher_e_enviar
+
+    page: MagicMock = MagicMock()
+    page.get_by_text.return_value.wait_for = MagicMock()
+    assert preencher_e_enviar(page, OK) is True

@@ -27,8 +27,12 @@ def enviar_via_requests(resultado: ResultadoDePara, session: requests.Session) -
     Returns:
         True quando o Google respondeu 200.
     """
-    resposta = session.post(f"{FORM_URL}/formResponse", data=montar_payload(resultado), timeout=10)
-    return resposta.status_code == 200
+    try:
+        resposta = session.post(f"{FORM_URL}/formResponse", data=montar_payload(resultado), timeout=10)
+        return resposta.status_code == 200
+    except requests.RequestException as e:
+        print(f"Erro ao enviar {resultado.cnj}: {e}")
+        return False
 
 
 def main() -> None:

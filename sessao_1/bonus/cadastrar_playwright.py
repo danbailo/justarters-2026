@@ -10,6 +10,7 @@ HEADLESS=1 roda sem janela (necessário no Codespaces).
 import os
 import time
 
+from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import Page, sync_playwright
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
@@ -32,21 +33,21 @@ def preencher_e_enviar(page: Page, resultado: ResultadoDePara) -> bool:
     """
     loc = resultado.localizacao
     assert loc is not None
-    page.goto(f"{FORM_URL}/viewform")
-    campos = {
-        "CNJ": resultado.cnj,
-        "Estado": loc.estado or "",
-        "Tribunal": loc.tribunal or "",
-        "Comarca": loc.comarca or "",
-        "Foro": loc.foro or "",
-    }
-    for rotulo, valor in campos.items():
-        page.get_by_role("textbox", name=rotulo).fill(valor)
-    page.get_by_role("button", name="Enviar").click()
     try:
+        page.goto(f"{FORM_URL}/viewform")
+        campos = {
+            "CNJ": resultado.cnj,
+            "Estado": loc.estado or "",
+            "Tribunal": loc.tribunal or "",
+            "Comarca": loc.comarca or "",
+            "Foro": loc.foro or "",
+        }
+        for rotulo, valor in campos.items():
+            page.get_by_role("textbox", name=rotulo).fill(valor)
+        page.get_by_role("button", name="Enviar").click()
         page.get_by_text(CONFIRMACAO).wait_for(timeout=10_000)
-    except PlaywrightTimeoutError:
-        print(f"Confirmação não apareceu para {resultado.cnj}")
+    except PlaywrightError as e:
+        print(f"Erro ao preencher {resultado.cnj}: {e}")
         return False
     return True
 
@@ -58,9 +59,11 @@ def main() -> None:
     inicio = time.perf_counter()
     with sync_playwright() as playwright:
         navegador = playwright.chromium.launch(headless=headless, slow_mo=0 if headless else 150)
-        page = navegador.new_page(locale="pt-BR")
-        resumo = executar_cadastro(resultados, lambda resultado: preencher_e_enviar(page, resultado))
-        navegador.close()
+        try:
+            page = navegador.new_page(locale="pt-BR")
+            resumo = executar_cadastro(resultados, lambda resultado: preencher_e_enviar(page, resultado))
+        finally:
+            navegador.close()
     imprimir_resumo(resumo)
     print(f"Tempo de cadastro: {time.perf_counter() - inicio:.2f} s")
 

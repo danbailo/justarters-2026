@@ -18,7 +18,7 @@ client: TestClient = TestClient(app)
 
 
 def test_escolher_processo_id_usa_principal() -> None:
-    grupo = {"processos_categorizados": {"conhecimento_principal": {"id": 7}, "conhecimento_recurso": [{"id": 9}]}}
+    grupo = {"processos_categorizados": {"conhecimento_recurso": [{"id": 9}], "conhecimento_principal": {"id": 7}}}
     assert escolher_processo_id(grupo) == 7
 
 

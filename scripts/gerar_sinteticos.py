@@ -88,11 +88,14 @@ def gerar(destino: Path) -> None:
     """
     (destino / "grupo_processual").mkdir(parents=True, exist_ok=True)
     (destino / "processo").mkdir(parents=True, exist_ok=True)
-    for processo in PROCESSOS:
+    print(f"Iniciando a geração de {len(PROCESSOS)} processos sintéticos em {destino}...")
+    for indice, processo in enumerate(PROCESSOS, start=1):
+        print(f"Progresso {indice}/{len(PROCESSOS)}: {processo['cnj']}")
         grupo_path = destino / "grupo_processual" / f"{processo['cnj']}.json"
         grupo_path.write_text(json.dumps(_grupo(processo), ensure_ascii=False, indent=2), encoding="utf-8")
         processo_path = destino / "processo" / f"{processo['id']}.json"
         processo_path.write_text(json.dumps(_processo(processo), ensure_ascii=False, indent=2), encoding="utf-8")
+    print("Geração de dados sintéticos finalizada!")
 
 
 if __name__ == "__main__":

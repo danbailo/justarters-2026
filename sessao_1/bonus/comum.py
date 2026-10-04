@@ -58,7 +58,8 @@ def executar_cadastro(
         Resumo com enviados, falhas e pulados (com motivo).
     """
     resumo = ResumoCadastro()
-    for resultado in resultados:
+    for indice, resultado in enumerate(resultados, start=1):
+        print(f"Progresso {indice}/{len(resultados)}: {resultado.cnj}")
         if not resultado.sucesso:
             resumo.pulados.append(resultado)
             continue

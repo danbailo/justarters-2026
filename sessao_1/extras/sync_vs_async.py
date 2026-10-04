@@ -59,29 +59,40 @@ async def rodar_async(cnjs: list[str], client: httpx.AsyncClient, limite: int) -
         Um resultado por CNJ, na mesma ordem de `cnjs`.
     """
     semaforo = asyncio.Semaphore(limite)
+    concluidos = 0
 
     async def _com_limite(cnj: str) -> ResultadoDePara:
+        nonlocal concluidos
         async with semaforo:
-            return await de_para_async(cnj, client)
+            resultado = await de_para_async(cnj, client)
+        concluidos += 1
+        print(f"Progresso {concluidos}/{len(cnjs)}: {cnj}")
+        return resultado
 
     return list(await asyncio.gather(*(_com_limite(cnj) for cnj in cnjs)))
 
 
 async def _rodar_async_cronometrado(base_url: str) -> float:
     """Executa a versão async e devolve os segundos gastos."""
+    print(f"Iniciando o de-para async de {len(CNJS)} CNJs, até 5 ao mesmo tempo...")
     inicio = time.perf_counter()
     async with httpx.AsyncClient(base_url=base_url, timeout=10) as client:
         await rodar_async(CNJS, client, limite=5)
+    print("De-para async finalizado!")
     return time.perf_counter() - inicio
 
 
 def main() -> None:
     """Imprime o tempo das duas versões."""
     base_url = os.environ.get("BASE_URL", BASE_URL_PADRAO)
+    print("Iniciando a comparação sync vs async...")
     inicio = time.perf_counter()
     rodar(CNJS, base_url)
-    print(f"Sync  (um por vez):          {time.perf_counter() - inicio:5.2f} s")
-    print(f"Async (até 5 ao mesmo tempo): {asyncio.run(_rodar_async_cronometrado(base_url)):5.2f} s")
+    sync = time.perf_counter() - inicio
+    assincrono = asyncio.run(_rodar_async_cronometrado(base_url))
+    print(f"Sync  (um por vez):           {sync:5.2f} s")
+    print(f"Async (até 5 ao mesmo tempo): {assincrono:5.2f} s")
+    print("Comparação finalizada!")
 
 
 if __name__ == "__main__":

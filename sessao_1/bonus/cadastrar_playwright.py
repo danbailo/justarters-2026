@@ -56,6 +56,7 @@ def main() -> None:
     """De-para dos CNJs e cadastro via navegador, com cronômetro."""
     resultados = rodar(CNJS, os.environ.get("BASE_URL", BASE_URL_PADRAO))
     headless = os.environ.get("HEADLESS") == "1"
+    print("Iniciando os cadastros via Playwright...")
     inicio = time.perf_counter()
     with sync_playwright() as playwright:
         navegador = playwright.chromium.launch(headless=headless, slow_mo=0 if headless else 150)
@@ -66,6 +67,7 @@ def main() -> None:
             navegador.close()
     imprimir_resumo(resumo)
     print(f"Tempo de cadastro: {time.perf_counter() - inicio:.2f} s")
+    print("Cadastros via Playwright finalizados!")
 
 
 if __name__ == "__main__":

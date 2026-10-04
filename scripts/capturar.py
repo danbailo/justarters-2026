@@ -92,7 +92,8 @@ def capturar(cnjs: list[str], client: httpx.Client, destino: Path) -> None:
     pulados_grupo_sem_processos = 0
 
     try:
-        for cnj in cnjs:
+        for indice, cnj in enumerate(cnjs, start=1):
+            print(f"Progresso {indice}/{len(cnjs)}: {cnj}")
             resposta = client.get(f"/v2/grupo_processual/{cnj}")
             if resposta.status_code == 404:
                 pulados_nao_encontrado += 1

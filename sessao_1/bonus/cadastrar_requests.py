@@ -38,11 +38,13 @@ def enviar_via_requests(resultado: ResultadoDePara, session: requests.Session) -
 def main() -> None:
     """De-para dos CNJs e cadastro via requests, com cronômetro."""
     resultados = rodar(CNJS, os.environ.get("BASE_URL", BASE_URL_PADRAO))
+    print("Iniciando os cadastros via requests...")
     inicio = time.perf_counter()
     with requests.Session() as session:
         resumo = executar_cadastro(resultados, lambda resultado: enviar_via_requests(resultado, session))
     imprimir_resumo(resumo)
     print(f"Tempo de cadastro: {time.perf_counter() - inicio:.2f} s")
+    print("Cadastros via requests finalizados!")
 
 
 if __name__ == "__main__":

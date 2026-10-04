@@ -50,6 +50,9 @@ def get_com_retry(
 if __name__ == "__main__":
     data_dir = pathlib.Path(os.environ.get("MOCK_DATA_DIR", DATA_DIR_PADRAO))
     caminho = f"/processo/{primeiro_id_existente(data_dir)}"
+    total = 5
+    print(f"Iniciando {total} requisições com retry em {caminho}...")
     with httpx.Client(base_url=os.environ.get("BASE_URL", BASE_URL_PADRAO), timeout=10) as client:
-        for _ in range(5):
-            print(get_com_retry(client, caminho).status_code)
+        for indice in range(1, total + 1):
+            print(f"Progresso {indice}/{total}: status {get_com_retry(client, caminho).status_code}")
+    print("Requisições com retry finalizadas!")

@@ -100,15 +100,20 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.comando == "carga":
+        print(f"Iniciando a carga: {args.n} requests simultâneos em {args.caminho}...")
         segundos = asyncio.run(_carga_cli(args.base_url, args.caminho, args.n))
         print(f"{args.n} requests em {args.caminho}: {segundos:.2f} s")
+        print("Carga finalizada!")
         return None
 
     processo_id = primeiro_id_existente(Path(os.environ.get("MOCK_DATA_DIR", DATA_DIR_PADRAO)))
+    print(f"Iniciando as checagens em {args.base_url}...")
     with httpx.Client(base_url=args.base_url, timeout=10) as client:
-        for checagem in checar(client, os.environ.get("API_KEY", "justarters"), processo_id):
-            status = "OK    " if checagem.ok else "FALHOU"
-            print(f"{status} {checagem.nome}: esperado {checagem.esperado}, obtido {checagem.obtido}")
+        checagens = checar(client, os.environ.get("API_KEY", "justarters"), processo_id)
+    for indice, checagem in enumerate(checagens, start=1):
+        status = "OK    " if checagem.ok else "FALHOU"
+        print(f"Progresso {indice}/{len(checagens)}: {status} {checagem.nome}: esperado {checagem.esperado}, obtido {checagem.obtido}")
+    print("Checagens finalizadas!")
     return None
 
 

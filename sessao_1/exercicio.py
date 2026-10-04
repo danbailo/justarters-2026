@@ -102,16 +102,36 @@ def imprimir_relatorio(resultados: list[ResultadoDePara]) -> None:
     print(f"\n{sucessos}/{len(resultados)} CNJs com localização completa")
 
 
+def _processar(cnjs: list[str], client: httpx.Client) -> list[ResultadoDePara]:
+    """Roda o de-para de cada CNJ em sequência, mostrando o progresso.
+
+    Args:
+        cnjs: CNJs a processar.
+        client: Cliente HTTP já apontado para o mock.
+
+    Returns:
+        Um resultado por CNJ, na mesma ordem.
+    """
+    resultados = []
+    for indice, cnj in enumerate(cnjs, start=1):
+        print(f"Progresso {indice}/{len(cnjs)}: {cnj}")
+        resultados.append(de_para(cnj, client))
+    return resultados
+
+
 def rodar(cnjs: list[str], base_url: str) -> list[ResultadoDePara]:
     """Roda o de-para para cada CNJ, em sequência."""
+    print(f"Iniciando o de-para de {len(cnjs)} CNJs em {base_url}...")
     try:
         with httpx.Client(base_url=base_url, timeout=10) as client:
-            return [de_para(cnj, client) for cnj in cnjs]
+            resultados = _processar(cnjs, client)
     except httpx.ConnectError:
         sys.exit(
             f"Não consegui conectar em {base_url}. "
             "O mock está rodando? Suba com: uv run fastapi dev mock/app.py"
         )
+    print("De-para finalizado!")
+    return resultados
 
 
 if __name__ == "__main__":

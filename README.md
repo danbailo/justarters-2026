@@ -5,8 +5,20 @@ Roda 100% offline: um mock local imita a `consulta-api` do Jusbrasil.
 
 ## Setup
 
-**Opção 1 - Codespaces (sem instalar nada):** botão **Code > Codespaces > Create codespace**.
-O ambiente já sobe com Python e as dependências.
+**Opção 1 - Codespaces (sem instalar nada):**
+
+1. Entre na sua conta do GitHub (crie uma, se ainda não tiver).
+2. Abra https://codespaces.new/danbailo/justarters-2026 e clique em **Create codespace**.
+   O mesmo vale pelo botão **Code > Codespaces > Create codespace** no repositório.
+3. Espere de 1 a 3 minutos na primeira vez: o ambiente sobe com Python, `uv` e as dependências já instaladas.
+   Crie o seu antes da aula começar.
+
+Cada pessoa ganha o próprio Codespace, na própria conta: o que você editar fica só nele e não altera
+este repositório. O uso sai da cota gratuita de Codespaces da sua conta.
+
+Para abrir uma API que você subiu (ex.: `uv run fastapi dev mock/app.py`), clique em **Open in Browser**
+no aviso da porta 8000, ou abra a aba **Ports**, e acrescente `/docs` na URL.
+Um servidor por vez: todos usam a porta 8000, então pare o anterior (Ctrl+C) antes de subir outro.
 
 **Opção 2 - Local:**
 
@@ -15,7 +27,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh   # instala o uv
 uv sync                                            # instala as dependências
 ```
 
-Todos os comandos abaixo rodam a partir desta pasta.
+Todos os comandos abaixo rodam a partir da raiz do repositório.
 
 ## Sessão 1 - Introdução ao Python
 

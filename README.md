@@ -31,6 +31,15 @@ Todos os comandos abaixo rodam a partir da raiz do repositório.
 
 ## Sessão 1 - Introdução ao Python
 
+Fundamentos, do "Hello World!" às exceções:
+
+```bash
+uv run python -m sessao_1.fundamentos            # todos os temas
+uv run python -m sessao_1.fundamentos excecoes   # um tema só
+```
+
+Hands-on do de-para:
+
 ```bash
 uv run fastapi dev mock/app.py          # terminal 1: sobe o mock em http://localhost:8000
 uv run python -m sessao_1.exercicio     # terminal 2: seu exercício

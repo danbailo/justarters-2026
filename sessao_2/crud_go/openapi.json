@@ -121,6 +121,9 @@
               }
             }
           },
+          "404": {
+            "description": "Processo não encontrado"
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -168,6 +171,9 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "Processo não encontrado"
           },
           "422": {
             "description": "Validation Error",
@@ -217,6 +223,9 @@
               }
             }
           },
+          "404": {
+            "description": "Processo não encontrado"
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -247,6 +256,9 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "404": {
+            "description": "Processo não encontrado"
           },
           "422": {
             "description": "Validation Error",

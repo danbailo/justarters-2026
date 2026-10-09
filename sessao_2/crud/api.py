@@ -13,6 +13,8 @@ from sessao_2.crud.processos import Processo, Repositorio
 
 app = FastAPI(title="PythonAPI", description="CRUD de processos")
 
+NAO_ENCONTRADO: dict = {404: {"description": "Processo não encontrado"}}
+
 
 class ProcessoEntrada(BaseModel):
     """Corpo de POST e PUT: todos os campos."""
@@ -59,25 +61,25 @@ def listar(repo: Repo, uf: str | None = None) -> list[Processo]:
     return repo.listar(uf)
 
 
-@app.get("/processos/{processo_id}")
+@app.get("/processos/{processo_id}", responses=NAO_ENCONTRADO)
 def buscar(processo_id: int, repo: Repo) -> Processo:
     """Read: um processo pelo id."""
     return _ou_404(repo.buscar(processo_id))
 
 
-@app.put("/processos/{processo_id}")
+@app.put("/processos/{processo_id}", responses=NAO_ENCONTRADO)
 def substituir(processo_id: int, entrada: ProcessoEntrada, repo: Repo) -> Processo:
     """Update completo: troca todos os campos."""
     return _ou_404(repo.substituir(processo_id, **entrada.model_dump()))
 
 
-@app.patch("/processos/{processo_id}")
+@app.patch("/processos/{processo_id}", responses=NAO_ENCONTRADO)
 def atualizar(processo_id: int, entrada: ProcessoParcial, repo: Repo) -> Processo:
     """Update parcial: troca só os campos enviados no body."""
     return _ou_404(repo.atualizar(processo_id, entrada.model_dump(exclude_unset=True)))
 
 
-@app.delete("/processos/{processo_id}", status_code=204)
+@app.delete("/processos/{processo_id}", status_code=204, responses=NAO_ENCONTRADO)
 def remover(processo_id: int, repo: Repo) -> None:
     """Delete: remove o processo e responde 204, sem body."""
     if not repo.remover(processo_id):

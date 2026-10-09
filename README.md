@@ -103,7 +103,9 @@ A API e a CLI gravam no mesmo arquivo (`sessao_2/crud/processos.json`), então o
 aparece no outro.
 
 A mesma API em Go (precisa do Go instalado, não vem no Codespaces): `cd sessao_2/crud_go && go run .`
-sobe em http://localhost:8080.
+sobe em http://localhost:8080. Swagger das duas: http://localhost:8000/docs (PythonAPI) e
+http://localhost:8080/docs (GoAPI). O `openapi.json` da GoAPI é gerado do FastAPI; um teste garante
+que os dois contratos continuam iguais.
 
 ## Antes de cada sessão (instrutor)
 

@@ -1,5 +1,6 @@
 """Testes do CRUD de processos: núcleo, API e CLI."""
 
+import json
 from pathlib import Path
 
 import pytest
@@ -67,3 +68,12 @@ def test_cli_e_api_compartilham_os_dados(capsys: pytest.CaptureFixture[str]) -> 
     assert "1 processo(s)" in saida
     assert "Processo 1 removido" in saida
     assert "Processo 1 não encontrado" in saida
+
+
+def test_contrato_da_goapi_igual_ao_da_pythonapi() -> None:
+    spec_python = app.openapi()
+    spec_go = json.loads((Path(__file__).parents[1] / "sessao_2/crud_go/openapi.json").read_text(encoding="utf-8"))
+    assert spec_python["info"]["title"] == "PythonAPI"
+    assert spec_go["info"]["title"] == "GoAPI"
+    assert spec_go["paths"] == spec_python["paths"]
+    assert spec_go["components"] == spec_python["components"]

@@ -29,6 +29,8 @@ func TestCRUD(t *testing.T) {
 		{"PUT", "/processos/1", `{"cnj":"0000121-97.1999.8.16.0048","uf":"SP"}`, 200, `"comarca":null`},
 		{"DELETE", "/processos/1", "", 204, ""},
 		{"GET", "/processos/1", "", 404, "não encontrado"},
+		{"GET", "/openapi.json", "", 200, `"title": "GoAPI"`},
+		{"GET", "/docs", "", 200, "swagger-ui"},
 	}
 	for _, c := range casos {
 		rec := chamar(t, mux, c.metodo, c.caminho, c.corpo)

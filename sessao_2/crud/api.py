@@ -11,7 +11,7 @@ from pydantic import BaseModel
 
 from sessao_2.crud.processos import Processo, Repositorio
 
-app = FastAPI(title="CRUD de processos")
+app = FastAPI(title="PythonAPI", description="CRUD de processos")
 
 
 class ProcessoEntrada(BaseModel):

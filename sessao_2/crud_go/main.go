@@ -1,15 +1,29 @@
 // CRUD de processos em Go, só com a biblioteca padrão: o mesmo contrato da versão FastAPI.
 //
-// Rode com: go run .   (sobe em http://localhost:8080)
+// Rode com: go run .   (sobe em http://localhost:8080, Swagger em /docs)
 package main
 
 import (
+	_ "embed"
 	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
 	"sync"
 )
+
+// openapi.json é o mesmo contrato da PythonAPI (gerado do FastAPI), só com o título "GoAPI".
+//
+//go:embed openapi.json
+var openapi []byte
+
+const swaggerUI = `<!doctype html>
+<html><head><title>GoAPI</title><meta charset="utf-8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css">
+</head><body><div id="swagger-ui"></div>
+<script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+<script>SwaggerUIBundle({url: "/openapi.json", dom_id: "#swagger-ui"});</script>
+</body></html>`
 
 type Processo struct {
 	ID      int     `json:"id"`
@@ -46,7 +60,7 @@ func naoEncontrado(w http.ResponseWriter) {
 }
 
 func lerID(r *http.Request) (int, bool) {
-	id, err := strconv.Atoi(r.PathValue("id"))
+	id, err := strconv.Atoi(r.PathValue("processo_id"))
 	return id, err == nil
 }
 
@@ -151,14 +165,22 @@ func rotas(repo *Repositorio) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /processos", repo.criar)
 	mux.HandleFunc("GET /processos", repo.listar)
-	mux.HandleFunc("GET /processos/{id}", repo.buscar)
-	mux.HandleFunc("PUT /processos/{id}", repo.substituir)
-	mux.HandleFunc("PATCH /processos/{id}", repo.atualizar)
-	mux.HandleFunc("DELETE /processos/{id}", repo.remover)
+	mux.HandleFunc("GET /processos/{processo_id}", repo.buscar)
+	mux.HandleFunc("PUT /processos/{processo_id}", repo.substituir)
+	mux.HandleFunc("PATCH /processos/{processo_id}", repo.atualizar)
+	mux.HandleFunc("DELETE /processos/{processo_id}", repo.remover)
+	mux.HandleFunc("GET /openapi.json", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(openapi)
+	})
+	mux.HandleFunc("GET /docs", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write([]byte(swaggerUI))
+	})
 	return mux
 }
 
 func main() {
-	log.Println("CRUD de processos em http://localhost:8080")
+	log.Println("GoAPI em http://localhost:8080 (Swagger em http://localhost:8080/docs)")
 	log.Fatal(http.ListenAndServe(":8080", rotas(NovoRepositorio())))
 }

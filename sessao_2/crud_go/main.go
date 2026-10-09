@@ -6,8 +6,11 @@ package main
 import (
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
+	"os"
+	"sort"
 	"strconv"
 	"sync"
 )
@@ -39,14 +42,54 @@ type ProcessoParcial struct {
 	Comarca *string `json:"comarca"`
 }
 
+// Repositorio grava no mesmo arquivo JSON da PythonAPI (env CRUD_ARQUIVO), no mesmo formato.
 type Repositorio struct {
-	mu        sync.Mutex
-	processos map[int]Processo
-	proximoID int
+	mu      sync.RWMutex
+	arquivo string
 }
 
-func NovoRepositorio() *Repositorio {
-	return &Repositorio{processos: map[int]Processo{}, proximoID: 1}
+func NovoRepositorio(arquivo string) *Repositorio {
+	return &Repositorio{arquivo: arquivo}
+}
+
+func (repo *Repositorio) ler() (map[int]Processo, error) {
+	dados, err := os.ReadFile(repo.arquivo)
+	if errors.Is(err, os.ErrNotExist) {
+		return map[int]Processo{}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var lista []Processo
+	if err := json.Unmarshal(dados, &lista); err != nil {
+		return nil, err
+	}
+	processos := make(map[int]Processo, len(lista))
+	for _, p := range lista {
+		processos[p.ID] = p
+	}
+	return processos, nil
+}
+
+func (repo *Repositorio) salvar(processos map[int]Processo) error {
+	dados, err := json.MarshalIndent(ordenados(processos), "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(repo.arquivo, dados, 0o644)
+}
+
+func ordenados(processos map[int]Processo) []Processo {
+	lista := make([]Processo, 0, len(processos))
+	for _, p := range processos {
+		lista = append(lista, p)
+	}
+	sort.Slice(lista, func(i, j int) bool { return lista[i].ID < lista[j].ID })
+	return lista
+}
+
+func erroInterno(w http.ResponseWriter, err error) {
+	responderJSON(w, http.StatusInternalServerError, map[string]string{"detail": err.Error()})
 }
 
 func responderJSON(w http.ResponseWriter, status int, corpo any) {
@@ -72,19 +115,37 @@ func (repo *Repositorio) criar(w http.ResponseWriter, r *http.Request) {
 	}
 	repo.mu.Lock()
 	defer repo.mu.Unlock()
-	entrada.ID = repo.proximoID
-	repo.proximoID++
-	repo.processos[entrada.ID] = entrada
+	processos, err := repo.ler()
+	if err != nil {
+		erroInterno(w, err)
+		return
+	}
+	entrada.ID = 1
+	for id := range processos {
+		if id >= entrada.ID {
+			entrada.ID = id + 1
+		}
+	}
+	processos[entrada.ID] = entrada
+	if err := repo.salvar(processos); err != nil {
+		erroInterno(w, err)
+		return
+	}
 	w.Header().Set("Location", "/processos/"+strconv.Itoa(entrada.ID))
 	responderJSON(w, http.StatusCreated, entrada)
 }
 
 func (repo *Repositorio) listar(w http.ResponseWriter, r *http.Request) {
 	uf := r.URL.Query().Get("uf")
-	repo.mu.Lock()
-	defer repo.mu.Unlock()
+	repo.mu.RLock()
+	defer repo.mu.RUnlock()
+	processos, err := repo.ler()
+	if err != nil {
+		erroInterno(w, err)
+		return
+	}
 	resultado := []Processo{}
-	for _, p := range repo.processos {
+	for _, p := range ordenados(processos) {
 		if uf == "" || p.UF == uf {
 			resultado = append(resultado, p)
 		}
@@ -94,9 +155,14 @@ func (repo *Repositorio) listar(w http.ResponseWriter, r *http.Request) {
 
 func (repo *Repositorio) buscar(w http.ResponseWriter, r *http.Request) {
 	id, ok := lerID(r)
-	repo.mu.Lock()
-	defer repo.mu.Unlock()
-	p, existe := repo.processos[id]
+	repo.mu.RLock()
+	defer repo.mu.RUnlock()
+	processos, err := repo.ler()
+	if err != nil {
+		erroInterno(w, err)
+		return
+	}
+	p, existe := processos[id]
 	if !ok || !existe {
 		naoEncontrado(w)
 		return
@@ -113,12 +179,21 @@ func (repo *Repositorio) substituir(w http.ResponseWriter, r *http.Request) {
 	}
 	repo.mu.Lock()
 	defer repo.mu.Unlock()
-	if _, existe := repo.processos[id]; !ok || !existe {
+	processos, err := repo.ler()
+	if err != nil {
+		erroInterno(w, err)
+		return
+	}
+	if _, existe := processos[id]; !ok || !existe {
 		naoEncontrado(w)
 		return
 	}
 	entrada.ID = id
-	repo.processos[id] = entrada
+	processos[id] = entrada
+	if err := repo.salvar(processos); err != nil {
+		erroInterno(w, err)
+		return
+	}
 	responderJSON(w, http.StatusOK, entrada)
 }
 
@@ -131,7 +206,12 @@ func (repo *Repositorio) atualizar(w http.ResponseWriter, r *http.Request) {
 	}
 	repo.mu.Lock()
 	defer repo.mu.Unlock()
-	p, existe := repo.processos[id]
+	processos, err := repo.ler()
+	if err != nil {
+		erroInterno(w, err)
+		return
+	}
+	p, existe := processos[id]
 	if !ok || !existe {
 		naoEncontrado(w)
 		return
@@ -145,7 +225,11 @@ func (repo *Repositorio) atualizar(w http.ResponseWriter, r *http.Request) {
 	if parcial.Comarca != nil {
 		p.Comarca = parcial.Comarca
 	}
-	repo.processos[id] = p
+	processos[id] = p
+	if err := repo.salvar(processos); err != nil {
+		erroInterno(w, err)
+		return
+	}
 	responderJSON(w, http.StatusOK, p)
 }
 
@@ -153,11 +237,20 @@ func (repo *Repositorio) remover(w http.ResponseWriter, r *http.Request) {
 	id, ok := lerID(r)
 	repo.mu.Lock()
 	defer repo.mu.Unlock()
-	if _, existe := repo.processos[id]; !ok || !existe {
+	processos, err := repo.ler()
+	if err != nil {
+		erroInterno(w, err)
+		return
+	}
+	if _, existe := processos[id]; !ok || !existe {
 		naoEncontrado(w)
 		return
 	}
-	delete(repo.processos, id)
+	delete(processos, id)
+	if err := repo.salvar(processos); err != nil {
+		erroInterno(w, err)
+		return
+	}
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -181,6 +274,10 @@ func rotas(repo *Repositorio) *http.ServeMux {
 }
 
 func main() {
-	log.Println("GoAPI em http://localhost:8080 (Swagger em http://localhost:8080/docs)")
-	log.Fatal(http.ListenAndServe(":8080", rotas(NovoRepositorio())))
+	arquivo := os.Getenv("CRUD_ARQUIVO")
+	if arquivo == "" {
+		arquivo = "../crud/processos.json"
+	}
+	log.Println("GoAPI em http://localhost:8080 (Swagger em http://localhost:8080/docs), dados em", arquivo)
+	log.Fatal(http.ListenAndServe(":8080", rotas(NovoRepositorio(arquivo))))
 }

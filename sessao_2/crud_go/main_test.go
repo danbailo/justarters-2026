@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -16,7 +17,7 @@ func chamar(t *testing.T, mux *http.ServeMux, metodo, caminho, corpo string) *ht
 }
 
 func TestCRUD(t *testing.T) {
-	mux := rotas(NovoRepositorio())
+	mux := rotas(NovoRepositorio(filepath.Join(t.TempDir(), "processos.json")))
 	casos := []struct {
 		metodo, caminho, corpo string
 		status                 int

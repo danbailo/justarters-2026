@@ -99,8 +99,8 @@ uv run python -m sessao_2.crud.cli criar --cnj 0000121-97.1999.8.16.0048 --uf PR
 uv run python -m sessao_2.crud.cli listar
 ```
 
-A API e a CLI gravam no mesmo arquivo (`sessao_2/crud/processos.json`), então o que você cria por um
-aparece no outro.
+A PythonAPI, a CLI e a GoAPI gravam no mesmo arquivo (`sessao_2/crud/processos.json`, env `CRUD_ARQUIVO`),
+então o que você cria por um aparece nos outros.
 
 A mesma API em Go (precisa do Go instalado, não vem no Codespaces): `cd sessao_2/crud_go && go run .`
 sobe em http://localhost:8080. Swagger das duas: http://localhost:8000/docs (PythonAPI) e

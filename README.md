@@ -91,6 +91,20 @@ uv run python -m sessao_2.cliente carga --caminho /livre -n 10
 uv run pytest sessao_2/extras
 ```
 
+### CRUD de processos: o mesmo núcleo, dois entrypoints
+
+```bash
+uv run fastapi dev sessao_2/crud/api.py                                      # entrypoint HTTP
+uv run python -m sessao_2.crud.cli criar --cnj 0000121-97.1999.8.16.0048 --uf PR   # entrypoint CLI
+uv run python -m sessao_2.crud.cli listar
+```
+
+A API e a CLI gravam no mesmo arquivo (`sessao_2/crud/processos.json`), então o que você cria por um
+aparece no outro.
+
+A mesma API em Go (precisa do Go instalado, não vem no Codespaces): `cd sessao_2/crud_go && go run .`
+sobe em http://localhost:8080.
+
 ## Antes de cada sessão (instrutor)
 
 ```bash
